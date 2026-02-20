@@ -83,6 +83,13 @@ button {
 <button onclick="today()">今日の運勢</button>
 <button onclick="week()">今週の運勢</button>
 
+<div>
+  <button onclick="setCategory('general')">🔮 総合</button>
+  <button onclick="setCategory('love')">❤️ 恋愛</button>
+  <button onclick="setCategory('work')">💼 仕事</button>
+  <button onclick="setCategory('money')">💰 金運</button>
+</div>
+
 <div class="card">
   <div id="image"></div>
   <div id="result"></div>
@@ -91,9 +98,14 @@ button {
 
 <script>
 const cards = [
-  { name:"愚者", image:"fool.jpg",
-    upright:"新しい始まり。自由な挑戦が幸運を呼ぶ。",
-    reversed:"無計画に注意。慎重な判断が必要。" },
+  {
+  name:"愚者",
+  image:"fool.jpg",
+  meanings:{
+    general:{
+      upright:"新しい挑戦が幸運を呼ぶ。",
+      reversed:"無計画に注意。"
+    },
 
   { name:"魔術師", image:"magician.jpg",
     upright:"才能開花。行動力が成功を導く。",
@@ -196,7 +208,9 @@ function today() {
 
   const isReversed = Math.random() > 0.5;
   const position = isReversed ? "逆位置" : "正位置";
-  const message = isReversed ? card.reversed : card.upright;
+　const message = isReversed
+  ? card.meanings[currentCategory].reversed
+  : card.meanings[currentCategory].upright;
   const rotation = isReversed ? "rotate(180deg)" : "rotate(0deg)";
 
   document.getElementById("image").innerHTML =
@@ -235,6 +249,11 @@ function cardToFile(card){
     "愚者":"fool.jpg"
   };
   return map[card] || "fool.jpg";
+}
+let currentCategory = "general";
+
+function setCategory(cat){
+  currentCategory = cat;
 }
 
 </script>
