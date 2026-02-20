@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>今日のタロット占い</title>
+<style>
+body {
+  margin: 0;
+  background: radial-gradient(ellipse at bottom, #0d1b2a 0%, #000000 100%);
+  color: white;
+  text-align: center;
+  font-family: sans-serif;
+  overflow: hidden;   /* ← ページ全体はスクロール禁止 */
+  position: relative;
+}
+
+/* 星空コンテナ */
+.stars {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image:
+    radial-gradient(white 1px, transparent 1px),
+    radial-gradient(white 1px, transparent 1px);
+  background-size: 50px 50px, 80px 80px;
+  background-position: 0 0, 25px 25px;
+  animation: moveStars 60s linear infinite;
+  opacity: 0.4;
+  z-index: 0;
+}
+
+@keyframes moveStars {
+  from { transform: translateY(0); }
+  to { transform: translateY(-100px); }
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+}
+
+button {
+  padding: 15px 30px;
+  margin: 10px;
+  font-size: 16px;
+  background: gold;
+  border: none;
+  border-radius: 8px;
+}
+.card {
+  margin-top: 20px;
+  padding: 10px;
+  max-height: 60vh;      /* 画面の60%高さまで */
+  overflow-y: auto;      /* ここだけ縦スクロール */
+}
+
+.card img {
+  width: 220px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+  border: 3px solid gold;
+  margin-top: 20px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade {
+  animation: fadeIn 0.8s ease-in-out;
+}
+</style>
+</head>
+<body>
+<div class="stars"></div>
+<div class="content">
+
+<h1>🔮 タロット占い</h1>
+
+<button onclick="today()">今日の運勢</button>
+<button onclick="week()">今週の運勢</button>
+
+<div class="card">
+  <div id="image"></div>
+  <div id="result"></div>
+</div>
+
+
+<script>
+const cards = [
+  { name:"愚者", image:"fool.jpg",
+    upright:"新しい始まり。自由な挑戦が幸運を呼ぶ。",
+    reversed:"無計画に注意。慎重な判断が必要。" },
+
+  { name:"魔術師", image:"magician.jpg",
+    upright:"才能開花。行動力が成功を導く。",
+    reversed:"自信不足や迷いが出やすい。" },
+
+  { name:"女教皇", image:"priestess.jpg",
+    upright:"直感が冴える。静かな判断が吉。",
+    reversed:"疑いすぎに注意。" },
+
+  { name:"女帝", image:"empress.jpg",
+    upright:"豊かさと愛情が広がる。",
+    reversed:"甘えすぎに注意。" },
+
+  { name:"皇帝", image:"emperor.jpg",
+    upright:"リーダーシップ発揮。",
+    reversed:"支配的になりすぎる恐れ。" },
+
+  { name:"教皇", image:"hierophant.jpg",
+    upright:"学びと導きの時。",
+    reversed:"形式に縛られすぎないように。" },
+
+  { name:"恋人", image:"lovers.jpg",
+    upright:"大切な選択。愛がテーマ。",
+    reversed:"迷いが生じやすい。" },
+
+  { name:"戦車", image:"chariot.jpg",
+    upright:"前進の時。強い意志が成功へ。",
+    reversed:"暴走に注意。" },
+
+  { name:"力", image:"strength.jpg",
+    upright:"内なる強さが鍵。",
+    reversed:"感情コントロールが必要。" },
+
+  { name:"隠者", image:"hermit.jpg",
+    upright:"内省と探求の時間。",
+    reversed:"孤立しすぎないように。" },
+
+  { name:"運命の輪", image:"wheel.jpg",
+    upright:"流れが変わる好機。",
+    reversed:"停滞を感じる時。" },
+
+  { name:"正義", image:"justice.jpg",
+    upright:"公平な判断が吉。",
+    reversed:"偏りに注意。" },
+
+  { name:"吊るされた男", image:"hangedman.jpg",
+    upright:"視点を変えると道が開く。",
+    reversed:"無駄な我慢に注意。" },
+
+  { name:"死神", image:"death.jpg",
+    upright:"大きな変化。再生の兆し。",
+    reversed:"変化を恐れすぎない。" },
+
+  { name:"節制", image:"temperance.jpg",
+    upright:"調和とバランス。",
+    reversed:"極端な行動は避ける。" },
+
+  { name:"悪魔", image:"devil.jpg",
+    upright:"執着がテーマ。",
+    reversed:"束縛からの解放。" },
+
+  { name:"塔", image:"tower.jpg",
+    upright:"突然の変化。",
+    reversed:"小さな警告を無視しない。" },
+
+  { name:"星", image:"star.jpg",
+    upright:"希望が見える。",
+    reversed:"自信を失わないで。" },
+
+  { name:"月", image:"moon.jpg",
+    upright:"不安や迷いが浮上。",
+    reversed:"真実が明らかに。" },
+
+  { name:"太陽", image:"sun.jpg",
+    upright:"成功と喜び。",
+    reversed:"楽観しすぎに注意。" },
+
+  { name:"審判", image:"judgement.jpg",
+    upright:"目覚めと決断。",
+    reversed:"過去に縛られない。" },
+
+  { name:"世界", image:"world.jpg",
+    upright:"完成と達成。",
+    reversed:"あと一歩で完成。" }
+];
+
+
+function seededRandom(seed) {
+  return Math.abs(Math.sin(seed)) * 10000 % 1;
+}
+
+function orientation(seed){
+  const now = new Date().getTime();
+  return seededRandom(seed + now) > 0.5 ? "正位置" : "逆位置";
+}
+
+function today() {
+  const index = Math.floor(Math.random() * cards.length);
+  const card = cards[index];
+
+  const isReversed = Math.random() > 0.5;
+  const position = isReversed ? "逆位置" : "正位置";
+  const message = isReversed ? card.reversed : card.upright;
+  const rotation = isReversed ? "rotate(180deg)" : "rotate(0deg)";
+
+  document.getElementById("image").innerHTML =
+    "<img class='fade' style='transform:" + rotation + ";' src='images/" + card.image + "'>";
+
+  document.getElementById("result").innerHTML =
+    "今日のカードは【" + card.name + "（" + position + "）】<br><br>" +
+    message;
+}
+
+function week() {
+  let text = "今週のカード:<br><br>";
+  const now = new Date();
+  const base = now.getDate();
+
+  for(let i=0;i<3;i++){
+    const seed = base + i;
+    const index = Math.floor(seededRandom(seed) * cards.length);
+    const pos = orientation(seed+2);
+    text += "・" + cards[index] + "（" + pos + "）<br>";
+  }
+
+  text += "<br>今週は流れを受け入れることが開運の鍵です。";
+  document.getElementById("result").innerHTML = text;
+}
+
+function generateMessage(card, pos){
+  if(pos === "正位置"){
+    return "物事が前向きに進みやすいタイミングです。自信を持って行動しましょう。";
+  } else {
+    return "慎重さが求められる日です。焦らず一つずつ進めると良いでしょう。";
+  }
+}
+function cardToFile(card){
+  const map = {
+    "愚者":"fool.jpg"
+  };
+  return map[card] || "fool.jpg";
+}
+
+</script>
+
+</div>
+</body>
+</html>
